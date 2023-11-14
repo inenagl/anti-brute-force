@@ -2,6 +2,7 @@ package bwliststorage
 
 import (
 	"net"
+	"os"
 	"testing"
 	"time"
 
@@ -10,7 +11,15 @@ import (
 )
 
 // TODO Временные тесты для себя. Нужно переделать на функциональные и запускать в контейнере.
+func SkipCI(t *testing.T) {
+	t.Helper()
+	if os.Getenv("CI") != "" {
+		t.Skip("Skipping testing in CI environment")
+	}
+}
+
 func TestAdd(t *testing.T) {
+	SkipCI(t)
 	s := New(
 		"localhost",
 		5432,
@@ -33,6 +42,7 @@ func TestAdd(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
+	SkipCI(t)
 	s := New(
 		"localhost",
 		5432,
@@ -62,6 +72,7 @@ func TestRemove(t *testing.T) {
 }
 
 func TestGetByIP(t *testing.T) {
+	SkipCI(t)
 	s := New(
 		"localhost",
 		5432,
@@ -103,6 +114,7 @@ func TestGetByIP(t *testing.T) {
 }
 
 func TestRemoveAll(t *testing.T) {
+	SkipCI(t)
 	s := New(
 		"localhost",
 		5432,
