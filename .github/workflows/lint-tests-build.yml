@@ -1,0 +1,77 @@
+name: Anti BruteForce CI
+
+on:
+  push:
+    branches:
+      - master
+      - ci
+  pull_request:
+
+env:
+  GO111MODULE: "on"
+  CI: "GitHub"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract branch name
+        run: echo "BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.21.3
+          cache: false
+
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Linters
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.55.2
+          working-directory: ./
+
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract branch name
+        run: echo "BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.21.3
+
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Unit tests
+        run: go test -v -race --count=100 -timeout=30m ./...
+        working-directory: ./
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract branch name
+        run: echo "BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.21.3
+
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Build
+        run: go build -v -o .bin/abf ./cmd/abf
+        working-directory: ./
+
+      - name: Upload the build output
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-output
+          path: .bin/abf
+          retention-days: 1

@@ -68,34 +68,35 @@ type ServerConf struct {
 
 func New(filePath string, envPrefix string) (*Config, error) {
 	config := Config{}
+	v := viper.New()
 
 	dir, name := path.Split(filePath)
 	fParts := strings.SplitN(name, ".", 2)
 
-	viper.SetConfigName(fParts[0])
-	viper.SetConfigType(fParts[1])
-	viper.AddConfigPath(dir)
-	err := viper.ReadInConfig()
+	v.SetConfigName(fParts[0])
+	v.SetConfigType(fParts[1])
+	v.AddConfigPath(dir)
+	err := v.ReadInConfig()
 	if err != nil {
 		return nil, err
 	}
 
-	viper.SetEnvPrefix(envPrefix)
-	viper.AutomaticEnv()
+	v.SetEnvPrefix(envPrefix)
+	v.AutomaticEnv()
 
-	config.Main = processMainConf()
+	config.Main = processMainConf(v)
 
-	config.Logger, err = processLoggerConf()
+	config.Logger, err = processLoggerConf(v)
 	if err != nil {
 		return nil, err
 	}
 
-	config.DB, err = processDBConf()
+	config.DB, err = processDBConf(v)
 	if err != nil {
 		return nil, err
 	}
 
-	config.APIServer = processAPIServerConf()
+	config.APIServer = processAPIServerConf(v)
 
 	return &config, nil
 }
@@ -109,49 +110,50 @@ func inStrArray(needle string, arr []string) bool {
 	return false
 }
 
-func getAllowedStringVal(field string, allowed []string) (string, error) {
-	value := viper.GetString(field)
+func getAllowedStringVal(v *viper.Viper, field string, allowed []string) (string, error) {
+	value := v.GetString(field)
 	if !inStrArray(value, allowed) {
 		return "", fmt.Errorf(`invalid %s value: "%s", allowed values are %v`, field, value, allowed)
 	}
 	return value, nil
 }
 
-func processMainConf() *MainConf {
-	viper.SetDefault("main.maxLogins", defaultMaxLogins)
-	viper.SetDefault("main.maxPasswords", defaultMaxPasswords)
-	viper.SetDefault("main.maxIPs", defaultMaxIPs)
-	viper.SetDefault("main.cacheSize", defaultCacheSize)
-	viper.SetDefault("main.cacheTTL", defaultCacheTTL)
-	viper.SetDefault("main.bucketTTL", defaultBucketTTL)
+func processMainConf(v *viper.Viper) *MainConf {
+	v.SetDefault("main.maxLogins", defaultMaxLogins)
+	v.SetDefault("main.maxPasswords", defaultMaxPasswords)
+	v.SetDefault("main.maxIPs", defaultMaxIPs)
+	v.SetDefault("main.cacheSize", defaultCacheSize)
+	v.SetDefault("main.cacheTTL", defaultCacheTTL)
+	v.SetDefault("main.bucketTTL", defaultBucketTTL)
 
 	conf := MainConf{}
-	conf.MaxLogins = viper.GetInt("main.maxLogins")
-	conf.MaxPasswords = viper.GetInt("main.maxPasswords")
-	conf.MaxIPs = viper.GetInt("main.maxIPs")
-	conf.CacheSize = viper.GetInt("main.cacheSize")
-	conf.CacheTTL = viper.GetDuration("main.cacheTTL")
-	conf.BucketTTL = viper.GetDuration("main.bucketTTL")
+	conf.MaxLogins = v.GetInt("main.maxLogins")
+	conf.MaxPasswords = v.GetInt("main.maxPasswords")
+	conf.MaxIPs = v.GetInt("main.maxIPs")
+	conf.CacheSize = v.GetInt("main.cacheSize")
+	conf.CacheTTL = v.GetDuration("main.cacheTTL")
+	conf.BucketTTL = v.GetDuration("main.bucketTTL")
 
 	return &conf
 }
 
-func processLoggerConf() (*LoggerConf, error) {
-	viper.SetDefault("logger.preset", defaultLogPreset)
-	viper.SetDefault("logger.level", defaultLogLevel)
-	viper.SetDefault("logger.encoding", defaultLogEncoding)
-	viper.SetDefault("logger.outputPaths", defaultLogOutputPaths)
-	viper.SetDefault("logger.errorOutputPaths", defaultLogErrorOutputPaths)
+func processLoggerConf(v *viper.Viper) (*LoggerConf, error) {
+	v.SetDefault("logger.preset", defaultLogPreset)
+	v.SetDefault("logger.level", defaultLogLevel)
+	v.SetDefault("logger.encoding", defaultLogEncoding)
+	v.SetDefault("logger.outputPaths", defaultLogOutputPaths)
+	v.SetDefault("logger.errorOutputPaths", defaultLogErrorOutputPaths)
 
 	conf := LoggerConf{}
 
-	val, err := getAllowedStringVal("logger.preset", []string{"dev", "prod"})
+	val, err := getAllowedStringVal(v, "logger.preset", []string{"dev", "prod"})
 	if err != nil {
 		return nil, err
 	}
 	conf.Preset = val
 
 	val, err = getAllowedStringVal(
+		v,
 		"logger.level",
 		[]string{"debug", "info", "warn", "error", "dpanic", "panic", "fatal"},
 	)
@@ -160,46 +162,46 @@ func processLoggerConf() (*LoggerConf, error) {
 	}
 	conf.Level = val
 
-	val, err = getAllowedStringVal("logger.encoding", []string{"console", "json"})
+	val, err = getAllowedStringVal(v, "logger.encoding", []string{"console", "json"})
 	if err != nil {
 		return nil, err
 	}
 	conf.Encoding = val
 
-	conf.OutputPaths = viper.GetStringSlice("logger.outputPaths")
-	conf.ErrorOutputPaths = viper.GetStringSlice("logger.errorOutputPaths")
+	conf.OutputPaths = v.GetStringSlice("logger.outputPaths")
+	conf.ErrorOutputPaths = v.GetStringSlice("logger.errorOutputPaths")
 
 	return &conf, nil
 }
 
-func processDBConf() (*DBConf, error) {
-	viper.SetDefault("DBSSLMode", defaultDBSSLMode)
-	viper.SetDefault("DBTimeout", defaultDBTimeout)
+func processDBConf(v *viper.Viper) (*DBConf, error) {
+	v.SetDefault("DBSSLMode", defaultDBSSLMode)
+	v.SetDefault("DBTimeout", defaultDBTimeout)
 
 	conf := DBConf{}
 
-	if !viper.IsSet("DBHost") || !viper.IsSet("DBName") || !viper.IsSet("DBUser") || !viper.IsSet("DBPassword") {
+	if !v.IsSet("DBHost") || !v.IsSet("DBName") || !v.IsSet("DBUser") || !v.IsSet("DBPassword") {
 		return nil, fmt.Errorf("not all database requisites are set, need set dbhost, dbname, dbuser, dbpassword")
 	}
 
-	conf.Host = viper.GetString("DBHost")
-	conf.Port = viper.GetInt("DBPort")
-	conf.DBName = viper.GetString("DBName")
-	conf.User = viper.GetString("DBUser")
-	conf.Password = viper.GetString("DBPassword")
-	conf.SSLMode = viper.GetString("DBSSLMode")
-	conf.Timeout = viper.GetDuration("DBTimeout")
+	conf.Host = v.GetString("DBHost")
+	conf.Port = v.GetInt("DBPort")
+	conf.DBName = v.GetString("DBName")
+	conf.User = v.GetString("DBUser")
+	conf.Password = v.GetString("DBPassword")
+	conf.SSLMode = v.GetString("DBSSLMode")
+	conf.Timeout = v.GetDuration("DBTimeout")
 
 	return &conf, nil
 }
 
-func processAPIServerConf() *ServerConf {
-	viper.SetDefault("api-server.host", defaultAPIServerHost)
-	viper.SetDefault("api-server.port", defaultAPIServerPort)
+func processAPIServerConf(v *viper.Viper) *ServerConf {
+	v.SetDefault("api-server.host", defaultAPIServerHost)
+	v.SetDefault("api-server.port", defaultAPIServerPort)
 
 	conf := ServerConf{}
-	conf.Host = viper.GetString("api-server.host")
-	conf.Port = viper.GetInt("api-server.port")
+	conf.Host = v.GetString("api-server.host")
+	conf.Port = v.GetInt("api-server.port")
 
 	return &conf
 }

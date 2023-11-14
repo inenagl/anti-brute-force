@@ -88,9 +88,9 @@ func TestAuthByBuckets(t *testing.T) {
 	ip := net.IPv4(2, 2, 2, 2)
 	bwStorage.On("GetByIP", ip).Return(nil, nil)
 
-	lBucket := ratelimit.NewBucket(1, 1000)  // бакет ёмкостью 1 и скоростью освобождения 1 в миллисекунду.
-	pBucket := ratelimit.NewBucket(1, 1000)  // бакет ёмкостью 1 и скоростью освобождения 1 в миллисекунду.
-	ipBucket := ratelimit.NewBucket(1, 1000) // бакет ёмкостью 1 и скоростью освобождения 1 в миллисекунду.
+	lBucket := ratelimit.NewBucket(1, 10)  // бакет ёмкостью 1 и скоростью освобождения 10 в секунду.
+	pBucket := ratelimit.NewBucket(1, 10)  // бакет ёмкостью 1 и скоростью освобождения 10 в секунду.
+	ipBucket := ratelimit.NewBucket(1, 10) // бакет ёмкостью 1 и скоростью освобождения 10 в секунду.
 	lStorage.On("Get", "a").Return(lBucket, true)
 	pStorage.On("Get", "b").Return(pBucket, true)
 	ipStorage.On("Get", ip.String()).Return(ipBucket, true)
@@ -116,14 +116,15 @@ func TestAuthByBuckets(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, res)
 
-	// Через миллисекунду бакеты освобождаются и авторизация разрешена снова.
-	time.Sleep(time.Millisecond)
+	wait := 100 * time.Millisecond
+	// Через 100 миллисекунд бакеты освобождаются и авторизация разрешена снова.
+	time.Sleep(wait)
 	res, err = a.Auth("a", "b", ip)
 	require.NoError(t, err)
 	require.True(t, res)
 
 	// Заполним полностью каждый бакет по очереди
-	time.Sleep(time.Millisecond)
+	time.Sleep(wait)
 	lBucket.Increment()
 	res, err = a.Auth("a", "b", ip)
 	require.NoError(t, err)
@@ -133,7 +134,7 @@ func TestAuthByBuckets(t *testing.T) {
 	pStorage.AssertNumberOfCalls(t, "Set", 4)
 	ipStorage.AssertNumberOfCalls(t, "Set", 4)
 
-	time.Sleep(time.Millisecond)
+	time.Sleep(wait)
 	pBucket.Increment()
 	res, err = a.Auth("a", "b", ip)
 	require.NoError(t, err)
@@ -142,7 +143,7 @@ func TestAuthByBuckets(t *testing.T) {
 	pStorage.AssertNumberOfCalls(t, "Set", 5)
 	ipStorage.AssertNumberOfCalls(t, "Set", 5)
 
-	time.Sleep(time.Millisecond)
+	time.Sleep(wait)
 	ipBucket.Increment()
 	res, err = a.Auth("a", "b", ip)
 	require.NoError(t, err)
