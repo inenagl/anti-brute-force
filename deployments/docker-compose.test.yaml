@@ -26,5 +26,19 @@ services:
       - sh
       - -c
       - /sh/wait-for-it.sh db:5432 -t 0 --
-        /opt/abf/abf-migrate up migrations && 
+        /opt/abf/abf-migrate up migrations &&
         /opt/abf/abf-app --config /opt/abf/config.yaml
+
+  tests:
+    build:
+      context: ../
+      dockerfile: build/tests/Dockerfile
+    depends_on:
+      - anti-brute-force
+    env_file:
+      - env/tests.env
+    command:
+      - sh
+      - -c
+      - /sh/wait-for-it.sh anti-brute-force:8082 -t 0 --
+        go test -v -tags=integration -race .

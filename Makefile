@@ -3,6 +3,10 @@ DBSTRING := "user=abfuser password=abfpassword dbname=abf host=localhost port=54
 MIGRATIONS_DIR := "migrations"
 
 BIN := "./bin/abf"
+GIT_HASH := $(shell git log --format="%h" -n 1)
+LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
+
+DOCKER_IMG="anti-brute-force:develop"
 
 run-db:
 	docker run -d \
@@ -47,5 +51,38 @@ build:
 run: build
 	$(BIN) -config ./configs/config.yaml
 
+build-img:
+	docker build \
+		--build-arg=LDFLAGS="$(LDFLAGS)" \
+		-t $(DOCKER_IMG) \
+		-f build/Dockerfile .
 
-.PHONY: run_db stop_db install-goose migrate generate install-lint-deps lint test build run
+run-img: build-img
+	docker run $(DOCKER_IMG)
+
+version: build
+	$(BIN) version
+
+up:
+	docker compose -f deployments/docker-compose.yaml -p anti-brute-force up -d
+
+up-build:
+	docker compose -f deployments/docker-compose.yaml -p anti-brute-force up -d --build
+
+down:
+	docker compose -f deployments/docker-compose.yaml -p anti-brute-force down
+
+integration-tests-build:
+	docker compose -f deployments/docker-compose.test.yaml -p anti-brute-force-test build
+
+integration-tests-build_tests:
+	docker compose -f deployments/docker-compose.test.yaml -p anti-brute-force-test build tests
+
+integration-tests:
+	docker compose -f deployments/docker-compose.test.yaml -p anti-brute-force-test up --exit-code-from tests --attach tests && \
+	EXIT_CODE=$$? &&\
+	docker compose -f deployments/docker-compose.test.yaml -p anti-brute-force-test down && \
+    echo "command exited with $$EXIT_CODE" && \
+    exit $$EXIT_CODE
+
+.PHONY: run_db stop_db install-goose migrate generate install-lint-deps lint test build run build-img run-img version up up-build down integration-tests-build integration-tests-build_tests integration-tests
