@@ -18,6 +18,7 @@ services:
     ports:
       - "8889:8082"
     env_file:
+      - env/tests.env
       - env/dbvars.env
     restart: on-failure
     depends_on:
@@ -37,6 +38,7 @@ services:
       - anti-brute-force
     env_file:
       - env/tests.env
+      - env/dbvars.env
     command:
       - sh
       - -c

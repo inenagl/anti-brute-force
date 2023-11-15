@@ -37,12 +37,12 @@ func TestConfigFromFile(t *testing.T) {
 }
 
 func TestConfigFromFileAndEnv(t *testing.T) {
-	setEnv(t, "TST")
+	setEnv(t, "TST", true)
 	c, err := New("testdata/config.yaml", "TST")
 	require.NoError(t, err)
-	require.Equal(t, 1, c.Main.MaxLogins)
-	require.Equal(t, 2, c.Main.MaxPasswords)
-	require.Equal(t, 3, c.Main.MaxIPs)
+	require.Equal(t, 1000, c.Main.MaxLogins)
+	require.Equal(t, 2000, c.Main.MaxPasswords)
+	require.Equal(t, 3000, c.Main.MaxIPs)
 	require.Equal(t, 4, c.Main.CacheSize)
 	require.Equal(t, time.Second, c.Main.CacheTTL)
 	require.Equal(t, time.Second*2, c.Main.BucketTTL)
@@ -66,7 +66,7 @@ func TestConfigFromFileAndEnv(t *testing.T) {
 }
 
 func TestDefaults(t *testing.T) {
-	setEnv(t, "DEF")
+	setEnv(t, "DEF", false)
 
 	c, err := New("testdata/empty_config.yaml", "DEF")
 	require.NoError(t, err)
@@ -87,7 +87,7 @@ func TestDefaults(t *testing.T) {
 	require.Equal(t, defaultAPIServerPort, c.APIServer.Port)
 }
 
-func setEnv(t *testing.T, prefix string) {
+func setEnv(t *testing.T, prefix string, withMain bool) {
 	t.Helper()
 
 	err := os.Setenv(prefix+"_DBHOST", "envhost")
@@ -104,4 +104,13 @@ func setEnv(t *testing.T, prefix string) {
 	require.NoError(t, err)
 	err = os.Setenv(prefix+"_DBNAME", "envdbname")
 	require.NoError(t, err)
+
+	if withMain {
+		err = os.Setenv(prefix+"_MAIN_MAXLOGINS", "1000")
+		require.NoError(t, err)
+		err = os.Setenv(prefix+"_MAIN_MAXPASSWORDS", "2000")
+		require.NoError(t, err)
+		err = os.Setenv(prefix+"_MAIN_MAXIPS", "3000")
+		require.NoError(t, err)
+	}
 }

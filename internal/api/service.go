@@ -46,7 +46,7 @@ func (s *Service) Reset(_ context.Context, request *ResetRequest) (*EmptyRespons
 	passwd := request.GetPassword()
 	var ip net.IP
 	if request.GetIp() != "" {
-		ip := net.ParseIP(request.Ip)
+		ip = net.ParseIP(request.Ip)
 		if ip == nil {
 			return nil, status.Errorf(codes.InvalidArgument, "%s", fmt.Sprintf(`"%s" is not valid ip`, request.Ip))
 		}
