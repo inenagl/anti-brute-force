@@ -3,7 +3,9 @@ module github.com/inenagl/anti-brute-force
 go 1.21.3
 
 require (
+	github.com/cristalhq/acmd v0.11.1
 	github.com/go-faker/faker/v4 v4.2.0
+	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/jackc/fake v0.0.0-20150926172116-812a484cc733
 	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/jmoiron/sqlx v1.3.5

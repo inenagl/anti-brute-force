@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"github.com/inenagl/anti-brute-force/internal/app"
+	bwliststorage "github.com/inenagl/anti-brute-force/internal/storage/bwlist"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -56,24 +57,8 @@ func (s *Service) Reset(_ context.Context, request *ResetRequest) (*EmptyRespons
 	return &EmptyResponse{}, nil
 }
 
-func parseIPNet(s string) (*net.IPNet, error) {
-	_, IPNet, err := net.ParseCIDR(s)
-	// Допускаются единичные IP, поэтому пробуем распарсить как IP
-	if err != nil {
-		ip := net.ParseIP(s)
-		if ip == nil {
-			return nil, fmt.Errorf(`%w: can't parse "%s" to IP Network`, err, s)
-		}
-		IPNet = &net.IPNet{
-			IP:   ip,
-			Mask: net.IPv4Mask(255, 255, 255, 255),
-		}
-	}
-	return IPNet, nil
-}
-
 func (s *Service) AddToBlackList(_ context.Context, request *IpNetRequest) (*EmptyResponse, error) {
-	network, err := parseIPNet(request.GetInet())
+	network, err := bwliststorage.ParseIPNet(request.GetInet())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%s", err.Error())
 	}
@@ -87,7 +72,7 @@ func (s *Service) AddToBlackList(_ context.Context, request *IpNetRequest) (*Emp
 }
 
 func (s *Service) AddToWhiteList(_ context.Context, request *IpNetRequest) (*EmptyResponse, error) {
-	network, err := parseIPNet(request.GetInet())
+	network, err := bwliststorage.ParseIPNet(request.GetInet())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%s", err.Error())
 	}
@@ -101,7 +86,7 @@ func (s *Service) AddToWhiteList(_ context.Context, request *IpNetRequest) (*Emp
 }
 
 func (s *Service) RemoveFromBlackList(_ context.Context, request *IpNetRequest) (*EmptyResponse, error) {
-	network, err := parseIPNet(request.GetInet())
+	network, err := bwliststorage.ParseIPNet(request.GetInet())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%s", err.Error())
 	}
@@ -115,7 +100,7 @@ func (s *Service) RemoveFromBlackList(_ context.Context, request *IpNetRequest) 
 }
 
 func (s *Service) RemoveFromWhiteList(_ context.Context, request *IpNetRequest) (*EmptyResponse, error) {
-	network, err := parseIPNet(request.GetInet())
+	network, err := bwliststorage.ParseIPNet(request.GetInet())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%s", err.Error())
 	}

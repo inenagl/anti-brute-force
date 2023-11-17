@@ -179,7 +179,7 @@ func (s *Storage) GetByIP(ip net.IP) (*ListRecord, error) {
 		return nil, err
 	}
 
-	_, network, err := net.ParseCIDR(dest.Network)
+	network, err := ParseIPNet(dest.Network)
 	if err != nil {
 		return nil, err
 	}
@@ -198,4 +198,20 @@ func (s *Storage) RemoveAll() error {
 	)
 
 	return err
+}
+
+func ParseIPNet(s string) (*net.IPNet, error) {
+	_, IPNet, err := net.ParseCIDR(s)
+	// Допускаются единичные IP, поэтому пробуем распарсить как IP
+	if err != nil {
+		ip := net.ParseIP(s)
+		if ip == nil {
+			return nil, fmt.Errorf(`%w: can't parse "%s" to IP Network`, err, s)
+		}
+		IPNet = &net.IPNet{
+			IP:   ip,
+			Mask: net.IPv4Mask(255, 255, 255, 255),
+		}
+	}
+	return IPNet, nil
 }

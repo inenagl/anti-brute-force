@@ -3,6 +3,7 @@ DBSTRING := "user=abfuser password=abfpassword dbname=abf host=localhost port=54
 MIGRATIONS_DIR := "migrations"
 
 BIN := "./bin/abf"
+BIN_CLI := "./bin/abf-cli"
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
 
@@ -84,5 +85,11 @@ integration-tests:
 	docker compose -f deployments/docker-compose.test.yaml -p anti-brute-force-test down && \
     echo "command exited with $$EXIT_CODE" && \
     exit $$EXIT_CODE
+
+build-cli:
+	go build -v -o $(BIN_CLI) -ldflags "$(LDFLAGS)" ./cmd/cli
+
+run-cli: build-cli
+	$(BIN_CLI)
 
 .PHONY: run_db stop_db install-goose migrate generate install-lint-deps lint test build run build-img run-img version up up-build down integration-tests-build integration-tests-build_tests integration-tests
