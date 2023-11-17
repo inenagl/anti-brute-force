@@ -1,4 +1,4 @@
-name: Anti BruteForce CI
+name: Base CI
 
 on:
   push:

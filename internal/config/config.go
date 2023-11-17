@@ -82,6 +82,7 @@ func New(filePath string, envPrefix string) (*Config, error) {
 	}
 
 	v.SetEnvPrefix(envPrefix)
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	v.AutomaticEnv()
 
 	config.Main = processMainConf(v)

@@ -18,6 +18,7 @@ services:
     ports:
       - "8889:8082"
     env_file:
+      - env/tests.env
       - env/dbvars.env
     restart: on-failure
     depends_on:
@@ -26,5 +27,20 @@ services:
       - sh
       - -c
       - /sh/wait-for-it.sh db:5432 -t 0 --
-        /opt/abf/abf-migrate up migrations && 
+        /opt/abf/abf-migrate up migrations &&
         /opt/abf/abf-app --config /opt/abf/config.yaml
+
+  tests:
+    build:
+      context: ../
+      dockerfile: build/tests/Dockerfile
+    depends_on:
+      - anti-brute-force
+    env_file:
+      - env/tests.env
+      - env/dbvars.env
+    command:
+      - sh
+      - -c
+      - /sh/wait-for-it.sh anti-brute-force:8082 -t 0 --
+        go test -v -tags=integration -race .
