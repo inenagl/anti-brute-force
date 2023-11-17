@@ -12,7 +12,7 @@ import (
 )
 
 type InputHandler interface {
-	HandleInput()
+	Handle()
 }
 
 type inputHandler struct {
@@ -35,7 +35,7 @@ func NewHandler(ctx context.Context, cancel context.CancelFunc, in io.ReadCloser
 	}
 }
 
-func (h *inputHandler) HandleInput() {
+func (h *inputHandler) Handle() {
 	defer h.cancel()
 
 	var err error
@@ -60,36 +60,42 @@ func (h *inputHandler) HandleInput() {
 				}
 			}
 			input = strings.TrimSpace(input)
-
-			args, err := shlex.Split(input)
-			if err != nil {
-				if !h.writeStr(err.Error()) {
+			if err = h.handleInput(input); err != nil {
+				if !h.writeStr("Error: " + err.Error()) {
 					return
-				}
-			}
-
-			r := acmd.RunnerOf(
-				h.commands, acmd.Config{
-					AppName:         "",
-					Version:         "1.0",
-					AppDescription:  "CLI for anti-bruteforce service",
-					PostDescription: "",
-					Output:          h.out,
-					Args:            append([]string{""}, args...),
-					Context:         h.ctx,
-					Usage:           usage,
-				},
-			)
-
-			if err = r.Run(); err != nil {
-				if !errors.Is(err, acmd.ErrNoArgs) && !strings.Contains(err.Error(), "no such command") {
-					if !h.writeStr("Error: " + err.Error()) {
-						return
-					}
 				}
 			}
 		}
 	}
+}
+
+func (h *inputHandler) handleInput(input string) error {
+	args, err := shlex.Split(input)
+	if err != nil {
+		return err
+	}
+
+	r := acmd.RunnerOf(
+		h.commands, acmd.Config{
+			AppName:         "",
+			Version:         "1.0",
+			AppDescription:  "CLI for anti-bruteforce service",
+			PostDescription: "",
+			Output:          h.out,
+			Args:            append([]string{""}, args...),
+			Context:         h.ctx,
+			Usage:           usage,
+		},
+	)
+
+	if err = r.Run(); err != nil {
+		if errors.Is(err, acmd.ErrNoArgs) || !strings.Contains(err.Error(), "no such command") {
+			return nil
+		}
+		return err
+	}
+
+	return nil
 }
 
 func (h *inputHandler) writeStr(str string) bool {

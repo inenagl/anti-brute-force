@@ -87,7 +87,7 @@ func main() {
 
 	go func(wg *sync.WaitGroup) {
 		defer wg.Done()
-		handler.HandleInput()
+		handler.Handle()
 	}(&wg)
 
 	wg.Wait()
