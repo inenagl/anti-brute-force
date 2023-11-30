@@ -1,0 +1,30 @@
+main:
+  maxLogins: 1
+  maxPasswords: 2
+  maxIPs: 3
+  cacheSize: 4
+  cacheTTL: "1s"
+  bucketTTL: "2s"
+
+logger:
+  preset: "dev"        # "dev"|"prod"
+  level: "debug"       # "debug"|"info"|"warn"|"error"|"dpanic"|"panic"|"fatal"
+  encoding: "console"  # "console"|"json"
+  outputPaths:
+    - "/logfile.log"
+  errorOutputPaths:
+    - "/errorfile.log"
+    - "stdout"
+
+api-server:
+  host: "testapihost"
+  port: 1111
+
+# must be set in env
+dbhost: "testdbhost"
+dbport: 2222
+dbsslmode: "test"
+dbuser: "testuser"
+dbpassword: "testpassword"
+dbtimeout: "1s"
+dbname: "testdb"

@@ -1,0 +1,29 @@
+main:
+  maxLogins: 10       # max login attempts per minute for one login
+  maxPasswords: 100   # max login attempts per minute for one password
+  maxIPs: 1000        # max login attempts per minute for one IP
+  cacheSize: 100
+  cacheTTL: "1m30s"
+  bucketTTL: "5m"
+
+logger:
+  preset: "dev"        # "dev"|"prod"
+  level: "debug"       # "debug"|"info"|"warn"|"error"|"dpanic"|"panic"|"fatal"
+  encoding: "console"  # "console"|"json"
+  outputPaths:
+    - "stdout"
+  errorOutputPaths:
+    - "stdout"
+
+api-server:
+  host: ""
+  port: 8082
+
+# must be set in env with prefix "GOABF_"
+dbhost: "localhost"
+dbport: 5432
+dbsslmode: "disable"
+dbuser: "abfuser"
+dbpassword: "abfpassword"
+dbtimeout: "10s"
+dbname: "abf"

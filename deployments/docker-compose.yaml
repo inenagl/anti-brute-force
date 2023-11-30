@@ -1,0 +1,30 @@
+version: "3"
+
+services:
+  db:
+    image: "postgres"
+    environment:
+      - "POSTGRES_PASSWORD=postgres"
+      - "PGDATA=/var/lib/postgresql/data/pgdata"
+    volumes:
+      - ./db:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+
+  anti-brute-force:
+    build:
+      context: ../
+      dockerfile: build/Dockerfile
+    ports:
+      - "8889:8082"
+    env_file:
+      - env/dbvars.env
+    restart: on-failure
+    depends_on:
+      - db
+    command:
+      - sh
+      - -c
+      - /sh/wait-for-it.sh db:5432 -t 0 --
+        /opt/abf/abf-migrate up migrations && 
+        /opt/abf/abf-app --config /opt/abf/config.yaml
